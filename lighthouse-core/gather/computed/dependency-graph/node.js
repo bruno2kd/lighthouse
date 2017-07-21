@@ -6,24 +6,42 @@
 'use strict';
 
 class Node {
+
+  /**
+   * @param {string|number} id
+   */
   constructor(id) {
     this._id = id;
     this._dependents = [];
     this._dependencies = [];
   }
 
+  /**
+   * @return {string|number}
+   */
   get id() {
     return this._id;
   }
 
+  /**
+   * @return {!Array<!Node>}
+   */
   getDependents() {
     return this._dependents.slice();
   }
 
+
+  /**
+   * @return {!Array<!Node>}
+   */
   getDependencies() {
     return this._dependencies.slice();
   }
 
+
+  /**
+   * @return {!Node}
+   */
   getRootNode() {
     let rootNode = this;
     while (rootNode._dependencies.length) {
@@ -33,10 +51,16 @@ class Node {
     return rootNode;
   }
 
+  /**
+   * @param {!Node}
+   */
   addDependent(node) {
     node.addDependency(this);
   }
 
+  /**
+   * @param {!Node}
+   */
   addDependency(node) {
     if (this._dependencies.includes(node)) {
       return;
@@ -46,10 +70,22 @@ class Node {
     this._dependencies.push(node);
   }
 
+  /**
+   * Clones the node's information without adding any dependencies/dependents.
+   * @return {!Node}
+   */
   cloneWithoutRelationships() {
     return new Node(this.id);
   }
 
+  /**
+   * Clones the entire graph connected to this node filtered by the optional predicate. If a node is
+   * included by the predicate, all nodes along the paths between the two will be included. If the
+   * node that was called clone is not included in the resulting filtered graph, the return will be
+   * undefined.
+   * @param {function(!Node):boolean=} predicate
+   * @return {?Node}
+   */
   cloneWithRelationships(predicate) {
     const rootNode = this.getRootNode();
 
@@ -83,20 +119,32 @@ class Node {
     return idToNodeMap.get(this.id);
   }
 
-  _traversePaths(iterator, getList) {
+  /**
+   * Traverses all paths in the graph, calling iterator on each node visited. Decides which nodes to
+   * visit with the getNext function.
+   * @param {function(!Node,!Array<!Node>)} iterator
+   * @param {function(!Node):!Array<!Node>} getNext
+   */
+  _traversePaths(iterator, getNext) {
     const stack = [[this]];
     while (stack.length) {
       const path = stack.shift();
       const node = path[0];
       iterator(node, path);
 
-      const nodesToAdd = getList(node);
+      const nodesToAdd = getNext(node);
       for (const nextNode of nodesToAdd) {
         stack.push([nextNode].concat(path));
       }
     }
   }
 
+  /**
+   * Traverses all connected nodes exactly once, calling iterator on each. Decides which nodes to
+   * visit with the getNext function.
+   * @param {function(!Node,!Array<!Node>)} iterator
+   * @param {function(!Node):!Array<!Node>=} getNext Defaults to returning the dependents.
+   */
   traverse(iterator, getNext) {
     if (!getNext) {
       getNext = node => node.getDependents();

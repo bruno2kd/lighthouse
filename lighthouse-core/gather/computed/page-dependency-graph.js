@@ -18,6 +18,10 @@ class PageDependencyGraphArtifact extends ComputedArtifact {
     return 2;
   }
 
+  /**
+   * @param {!WebInspector.NetworkRequest} record
+   * @return {!Array<string>}
+   */
   static getNetworkInitiators(record) {
     if (!record._initiator) return [];
     if (record._initiator.url) return [record._initiator.url];
@@ -29,6 +33,11 @@ class PageDependencyGraphArtifact extends ComputedArtifact {
     return [];
   }
 
+  /**
+   * @param {!TraceOfTabArtifact} traceOfTab
+   * @param {!Array<!WebInspector.NetworkRequest>} networkRecords
+   * @return {!Node}
+   */
   static createGraph(traceOfTab, networkRecords) {
     const idToNodeMap = new Map();
     const urlToNodeMap = new Map();
@@ -65,6 +74,10 @@ class PageDependencyGraphArtifact extends ComputedArtifact {
     return rootNode;
   }
 
+  /**
+   * @param {!Node} rootNode
+   * @return {number}
+   */
   static computeGraphDuration(rootNode) {
     const depthByNodeId = new Map();
     const getMax = arr => Array.from(arr).reduce((max, next) => Math.max(max, next), 0);
@@ -92,7 +105,7 @@ class PageDependencyGraphArtifact extends ComputedArtifact {
    * @param {!Trace} trace
    * @param {!DevtoolsLog} devtoolsLog
    * @param {!ComputedArtifacts} artifacts
-   * @return {!Promise<!Object>}
+   * @return {!Promise<!Node>}
    */
   compute_(trace, devtoolsLog, artifacts) {
     const promises = [
